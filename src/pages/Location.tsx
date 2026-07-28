@@ -1,8 +1,102 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { MapPin, Search } from 'lucide-react'
 import { PageHeader } from '../components/PageHeader'
+import { LocationMap } from '../components/LocationMap'
 import { useApp } from '../context/AppContext'
+
+type Place = {
+  street: string
+  full: string
+  lat: number
+  lng: number
+  city: string
+  state: string
+}
+
+const PLACES: Place[] = [
+  {
+    street: 'Tranquil Lane',
+    full: '789 Tranquil Lane, Delhi, India',
+    lat: 28.5355,
+    lng: 77.241,
+    city: 'Delhi',
+    state: 'Delhi',
+  },
+  {
+    street: 'Magarpatta City',
+    full: '12B Tower 5, Magarpatta, Pune',
+    lat: 18.5167,
+    lng: 73.926,
+    city: 'Pune',
+    state: 'Maharashtra',
+  },
+  {
+    street: 'Koregaon Park',
+    full: 'Lane 7, Koregaon Park, Pune',
+    lat: 18.5362,
+    lng: 73.8939,
+    city: 'Pune',
+    state: 'Maharashtra',
+  },
+  {
+    street: 'Baner Road',
+    full: '202 Skyline, Baner, Pune',
+    lat: 18.559,
+    lng: 73.7868,
+    city: 'Pune',
+    state: 'Maharashtra',
+  },
+]
+
+async function reverseGeocode(lat: number, lng: number): Promise<Place> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+      { headers: { Accept: 'application/json' } },
+    )
+    if (!res.ok) throw new Error('geocode failed')
+    const data = (await res.json()) as {
+      display_name?: string
+      name?: string
+      address?: {
+        road?: string
+        suburb?: string
+        neighbourhood?: string
+        city?: string
+        town?: string
+        state?: string
+        postcode?: string
+      }
+    }
+    const street =
+      data.name ||
+      data.address?.road ||
+      data.address?.suburb ||
+      data.address?.neighbourhood ||
+      'Selected location'
+    const city =
+      data.address?.city || data.address?.town || data.address?.suburb || 'City'
+    const state = data.address?.state || ''
+    return {
+      street,
+      full: data.display_name || `${street}, ${city}`,
+      lat,
+      lng,
+      city,
+      state,
+    }
+  } catch {
+    return {
+      street: 'Selected location',
+      full: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+      lat,
+      lng,
+      city: 'Pune',
+      state: 'Maharashtra',
+    }
+  }
+}
 
 export function LocationPrompt() {
   const navigate = useNavigate()
@@ -76,7 +170,7 @@ export function LocationPrompt() {
       <button
         type="button"
         className="btn btn-primary"
-        onClick={() => navigate('/select-location')}
+        onClick={() => navigate('/select-location?auto=1')}
       >
         Select location Automatically
       </button>
@@ -99,19 +193,31 @@ export function LocationPrompt() {
 
 export function SelectLocation() {
   const navigate = useNavigate()
+  const [params] = useSearchParams()
   const { setLocationLabel, updateProfile } = useApp()
   const [query, setQuery] = useState('')
-  const [selected, setSelected] = useState({
-    street: 'Tranquil Lane',
-    full: '789 Tranquil Lane, Delhi, India',
-  })
+  const [selected, setSelected] = useState<Place>(PLACES[1])
+  const [locating, setLocating] = useState(false)
 
-  const suggestions = [
-    { street: 'Tranquil Lane', full: '789 Tranquil Lane, Delhi, India' },
-    { street: 'Magarpatta City', full: '12B Tower 5, Magarpatta, Pune' },
-    { street: 'Koregaon Park', full: 'Lane 7, Koregaon Park, Pune' },
-    { street: 'Baner Road', full: '202 Skyline, Baner, Pune' },
-  ].filter(
+  useEffect(() => {
+    if (params.get('auto') !== '1') return
+    if (!navigator.geolocation) return
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const place = await reverseGeocode(
+          pos.coords.latitude,
+          pos.coords.longitude,
+        )
+        setSelected(place)
+        setLocating(false)
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: true, timeout: 10000 },
+    )
+  }, [params])
+
+  const suggestions = PLACES.filter(
     (s) =>
       !query ||
       s.street.toLowerCase().includes(query.toLowerCase()) ||
@@ -122,15 +228,25 @@ export function SelectLocation() {
     setLocationLabel(selected.street)
     updateProfile({
       address1: selected.street,
-      city: selected.full.includes('Pune') ? 'Pune' : 'Delhi',
-      state: selected.full.includes('Pune') ? 'Maharashtra' : 'Delhi',
+      city: selected.city,
+      state: selected.state,
     })
     navigate('/home')
   }
 
+  const onMapPick = async (lat: number, lng: number) => {
+    setLocating(true)
+    const place = await reverseGeocode(lat, lng)
+    setSelected(place)
+    setLocating(false)
+  }
+
   return (
-    <div className="page flush" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '20px 24px 12px' }}>
+    <div
+      className="page flush"
+      style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}
+    >
+      <div style={{ padding: '20px 24px 12px', position: 'relative', zIndex: 20 }}>
         <PageHeader title="Select Your Location" />
         <div className="search-bar">
           <Search size={18} />
@@ -148,6 +264,7 @@ export function SelectLocation() {
               borderRadius: 12,
               overflow: 'hidden',
               background: '#fff',
+              boxShadow: 'var(--shadow)',
             }}
           >
             {suggestions.map((s) => (
@@ -177,35 +294,18 @@ export function SelectLocation() {
         )}
       </div>
 
-      <div className="map-placeholder">
-        <div
-          style={{
-            position: 'absolute',
-            top: 40,
-            left: 40,
-            fontSize: 11,
-            color: '#64748b',
-            fontWeight: 600,
-          }}
-        >
-          Starbucks
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 80,
-            right: 48,
-            fontSize: 11,
-            color: '#64748b',
-            fontWeight: 600,
-          }}
-        >
-          Hotel Royal
-        </div>
-        <MapPin size={48} className="map-pin" fill="var(--primary)" color="#fff" strokeWidth={1.5} />
+      <div className="leaflet-map-host">
+        <LocationMap
+          lat={selected.lat}
+          lng={selected.lng}
+          onPick={onMapPick}
+        />
+        {locating && (
+          <div className="map-loading">Updating location…</div>
+        )}
       </div>
 
-      <div className="bottom-sheet">
+      <div className="bottom-sheet" style={{ position: 'relative', zIndex: 20 }}>
         <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
           <MapPin size={22} color="var(--primary)" />
           <div>
