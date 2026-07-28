@@ -176,6 +176,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         })
         .filter(Boolean) as { name: string; qty: number; price: number }[]
 
+      const formatScheduleDay = (iso?: string) => {
+        if (!iso) return ''
+        const d = new Date(`${iso}T00:00:00`)
+        if (Number.isNaN(d.getTime())) return iso
+        return d.toLocaleDateString(undefined, {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        })
+      }
+
       const customerName = user?.name || 'Ram'
       const id = `ORD-${1000 + orders.length + 5}`
       const order: Order = {
@@ -186,8 +197,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         statusLabel: 'Order Placed',
         items,
         total: cartTotal,
-        pickupDate: `${schedule.pickupDate || '29 Jul 2026'} · ${schedule.pickupSlot || '10:00 AM - 12:00 PM'}`,
-        deliveryDate: `${schedule.deliveryDate || '31 Jul 2026'} · ${schedule.deliverySlot || '4:00 PM - 6:00 PM'}`,
+        pickupDate: `${formatScheduleDay(schedule.pickupDate) || 'Next available'} · ${schedule.pickupSlot || '10:00 AM - 12:00 PM'}`,
+        deliveryDate: `${formatScheduleDay(schedule.deliveryDate) || 'After pickup'} · ${schedule.deliverySlot || '4:00 PM - 6:00 PM'}`,
         address: user
           ? `${user.address1}, ${user.city}`
           : locationLabel,

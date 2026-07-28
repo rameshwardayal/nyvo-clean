@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets / local deploy helpers
+gcp-sa-key.json
+*-sa-key.json
+_*.ps1
+.env
+.env.*
+
