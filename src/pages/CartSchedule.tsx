@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Minus, Plus, Trash2 } from 'lucide-react'
 import { PageHeader } from '../components/PageHeader'
 import { useApp } from '../context/AppContext'
-import { CATALOG, TIME_SLOTS } from '../data/dummy'
+import { CATALOG, EXPRESS_DELIVERY_FEE, TIME_SLOTS } from '../data/dummy'
 
 type DateOption = {
   key: string
@@ -213,17 +213,19 @@ export function Schedule() {
   const today = useMemo(() => startOfDay(new Date()), [])
   const pickupDates = useMemo(() => upcomingDates(today, 10), [today])
   const [step, setStep] = useState<'pickup' | 'delivery' | 'confirm'>('pickup')
+  const express = schedule.express
 
   const pickupKey = schedule.pickupDate || pickupDates[0]?.key
   const pickupDateObj =
     pickupDates.find((d) => d.key === pickupKey)?.date || today
 
-  // Delivery must be at least 1 day after pickup (and never in the past)
+  // Standard: day after pickup. Express: same-day return allowed.
   const minDelivery = useMemo(() => {
     const d = new Date(pickupDateObj)
-    d.setDate(d.getDate() + 1)
-    return startOfDay(d)
-  }, [pickupDateObj])
+    d.setDate(d.getDate() + (express ? 0 : 1))
+    const min = startOfDay(d)
+    return min < today ? today : min
+  }, [pickupDateObj, express, today])
 
   const deliveryDates = useMemo(
     () => upcomingDates(minDelivery, 10),
@@ -234,7 +236,7 @@ export function Schedule() {
     schedule.deliveryDate &&
     deliveryDates.some((d) => d.key === schedule.deliveryDate)
       ? schedule.deliveryDate
-      : deliveryDates[1]?.key || deliveryDates[0]?.key
+      : deliveryDates[0]?.key
 
   // If stored delivery is before allowed min, clear/reset it
   useEffect(() => {
@@ -242,7 +244,7 @@ export function Schedule() {
       schedule.deliveryDate &&
       !deliveryDates.some((d) => d.key === schedule.deliveryDate)
     ) {
-      setSchedule({ deliveryDate: deliveryDates[1]?.key || deliveryDates[0]?.key })
+      setSchedule({ deliveryDate: deliveryDates[0]?.key })
     }
   }, [schedule.deliveryDate, deliveryDates, setSchedule])
 
@@ -252,6 +254,9 @@ export function Schedule() {
   const availableSlots = TIME_SLOTS.filter(
     (slot) => !isSlotInPast(selectedKey || '', slot),
   )
+
+  const expressFee = express ? EXPRESS_DELIVERY_FEE : 0
+  const estimatedTotal = cartTotal + expressFee
 
   const confirm = () => {
     const first = cart[0]
@@ -312,6 +317,43 @@ export function Schedule() {
 
       {step !== 'confirm' && (
         <>
+          {step === 'delivery' && (
+            <>
+              <h3 style={{ marginBottom: 12 }}>Delivery speed</h3>
+              <div className="delivery-speed-grid">
+                <button
+                  type="button"
+                  className={`delivery-speed-card${!express ? ' selected' : ''}`}
+                  onClick={() =>
+                    setSchedule({
+                      express: false,
+                      deliveryDate: '',
+                      deliverySlot: '',
+                    })
+                  }
+                >
+                  <strong>Standard</strong>
+                  <span>Return from next day · Free</span>
+                </button>
+                <button
+                  type="button"
+                  className={`delivery-speed-card express${express ? ' selected' : ''}`}
+                  onClick={() =>
+                    setSchedule({
+                      express: true,
+                      deliveryDate: '',
+                      deliverySlot: '',
+                    })
+                  }
+                >
+                  <span className="badge badge-amber">Express</span>
+                  <strong>Express</strong>
+                  <span>Same-day return · +₹{EXPRESS_DELIVERY_FEE}</span>
+                </button>
+              </div>
+            </>
+          )}
+
           <h3 style={{ marginBottom: 12 }}>
             Select {step === 'pickup' ? 'pickup' : 'delivery'} date
           </h3>
@@ -324,12 +366,12 @@ export function Schedule() {
                 marginBottom: 12,
               }}
             >
-              Delivery is available from the day after pickup (
-              {minDelivery.toLocaleDateString(undefined, {
-                day: 'numeric',
-                month: 'short',
-              })}
-              +).
+              {express
+                ? 'Express: delivery available from the same day as pickup.'
+                : `Standard: delivery from the day after pickup (${minDelivery.toLocaleDateString(
+                    undefined,
+                    { day: 'numeric', month: 'short' },
+                  )}+).`}
             </p>
           )}
           <div className="date-strip" style={{ marginBottom: 24 }}>
@@ -466,7 +508,21 @@ export function Schedule() {
             </p>
           </div>
           <div className="card" style={{ marginBottom: 16 }}>
-            <h3 style={{ marginBottom: 12 }}>Delivery</h3>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 12,
+              }}
+            >
+              <h3>Delivery</h3>
+              {express ? (
+                <span className="badge badge-amber">Express</span>
+              ) : (
+                <span className="badge badge-blue">Standard</span>
+              )}
+            </div>
             <p style={{ fontSize: 14, marginBottom: 4 }}>
               <strong>{deliveryLabel}</strong>
             </p>
@@ -475,10 +531,40 @@ export function Schedule() {
             </p>
           </div>
           <div className="card-soft" style={{ marginBottom: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Estimated total</span>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: 8,
+                fontSize: 14,
+              }}
+            >
+              <span>Items</span>
+              <span>₹{cartTotal || 0}</span>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: 8,
+                fontSize: 14,
+                color: express ? 'var(--text)' : 'var(--text-muted)',
+              }}
+            >
+              <span>Express delivery</span>
+              <span>{express ? `₹${EXPRESS_DELIVERY_FEE}` : '₹0'}</span>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                paddingTop: 8,
+                borderTop: '1px solid var(--border)',
+              }}
+            >
+              <strong>Estimated total</strong>
               <strong style={{ color: 'var(--primary)' }}>
-                ₹{cartTotal || 0}
+                ₹{estimatedTotal || 0}
               </strong>
             </div>
             {cart.length === 0 && (

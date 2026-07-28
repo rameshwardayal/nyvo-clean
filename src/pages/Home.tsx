@@ -158,6 +158,9 @@ export function Home() {
       <div className="hero-banner">
         <CalendarDays size={28} />
         <p>Book your laundry pickup in just a few taps!</p>
+        <p style={{ fontSize: 13, opacity: 0.9, margin: '0 0 16px', fontWeight: 500 }}>
+          Need it fast? Choose Express for same-day delivery.
+        </p>
         <button
           type="button"
           className="btn"
@@ -266,7 +269,10 @@ export function Home() {
             </div>
             <div className="meta">
               <strong>{o.serviceName}</strong>
-              <span>{o.statusLabel}</span>
+              <span>
+                {o.statusLabel}
+                {o.express ? ' · Express' : ''}
+              </span>
             </div>
             <ChevronRight size={18} color="var(--text-light)" />
           </button>

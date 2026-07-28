@@ -1312,6 +1312,50 @@ img {
   width: 100%;
 }
 
+.delivery-speed-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.delivery-speed-card {
+  text-align: left;
+  padding: 14px 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 88px;
+}
+
+.delivery-speed-card strong {
+  font-size: 15px;
+}
+
+.delivery-speed-card span:last-child {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.delivery-speed-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-pale);
+}
+
+.delivery-speed-card.express.selected {
+  border-color: #d97706;
+  background: #fffbeb;
+}
+
+.delivery-speed-card .badge {
+  align-self: flex-start;
+  margin-bottom: 2px;
+}
+
 .side-menu {
   position: fixed;
   inset: 0;

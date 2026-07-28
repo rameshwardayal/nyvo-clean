@@ -36,7 +36,10 @@ export function Orders() {
             <strong>
               {o.serviceName} · {o.id}
             </strong>
-            <span>{o.statusLabel}</span>
+            <span>
+              {o.statusLabel}
+              {o.express ? ' · Express' : ''}
+            </span>
           </div>
           <ChevronRight size={18} color="var(--text-light)" />
         </button>
@@ -58,7 +61,10 @@ export function Orders() {
             <strong>
               {o.serviceName} · {o.id}
             </strong>
-            <span>{o.statusLabel}</span>
+            <span>
+              {o.statusLabel}
+              {o.express ? ' · Express' : ''}
+            </span>
           </div>
           <ChevronRight size={18} color="var(--text-light)" />
         </button>
@@ -124,7 +130,7 @@ export function OrderDetail() {
         </div>
         <div>
           <strong style={{ fontSize: 18 }}>{order.serviceName}</strong>
-          <div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
             <span
               className={`badge ${
                 order.status === 'delivered'
@@ -136,6 +142,9 @@ export function OrderDetail() {
             >
               {order.statusLabel}
             </span>
+            {order.express && (
+              <span className="badge badge-amber">Express</span>
+            )}
           </div>
         </div>
       </div>
@@ -215,7 +224,13 @@ export function OrderDetail() {
         </p>
         <p style={{ fontSize: 13, marginBottom: 8 }}>
           <strong>Delivery:</strong> {order.deliveryDate}
+          {order.express ? ' (Express)' : ''}
         </p>
+        {order.express && (
+          <p style={{ fontSize: 13, marginBottom: 8 }}>
+            <strong>Express fee:</strong> ₹{order.expressFee ?? 99}
+          </p>
+        )}
         <p style={{ fontSize: 13 }}>
           <strong>Address:</strong> {order.address}
         </p>
