@@ -718,6 +718,57 @@ img {
   justify-content: center;
 }
 
+.leaflet-map-host {
+  flex: 1;
+  min-height: 280px;
+  position: relative;
+  z-index: 1;
+}
+
+.leaflet-map-wrap {
+  height: 100%;
+  width: 100%;
+  min-height: 280px;
+}
+
+.leaflet-map-wrap .leaflet-container {
+  height: 100%;
+  width: 100%;
+  font-family: var(--font);
+  z-index: 1;
+}
+
+.nyvo-map-pin {
+  background: transparent !important;
+  border: none !important;
+}
+
+.nyvo-map-pin-inner {
+  width: 28px;
+  height: 28px;
+  background: var(--primary);
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 4px 12px rgba(0, 71, 186, 0.4);
+}
+
+.map-loading {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  z-index: 500;
+  box-shadow: var(--shadow);
+}
+
 .map-pin {
   color: var(--primary);
   filter: drop-shadow(0 4px 8px rgba(0, 71, 186, 0.35));
