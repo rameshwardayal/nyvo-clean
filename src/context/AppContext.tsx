@@ -8,6 +8,7 @@ import {
 } from 'react'
 import {
   CATALOG,
+  EXPRESS_DELIVERY_FEE,
   INITIAL_NOTIFICATIONS,
   INITIAL_ORDERS,
   STATUS_LABELS,
@@ -35,6 +36,7 @@ interface ScheduleDraft {
   pickupSlot: string
   deliveryDate: string
   deliverySlot: string
+  express: boolean
 }
 
 interface AppState {
@@ -74,6 +76,7 @@ const defaultSchedule: ScheduleDraft = {
   pickupSlot: '',
   deliveryDate: '',
   deliverySlot: '',
+  express: false,
 }
 
 const AppContext = createContext<AppState | null>(null)
@@ -187,6 +190,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         })
       }
 
+      const expressFee = schedule.express ? EXPRESS_DELIVERY_FEE : 0
+      const orderTotal = cartTotal + expressFee
       const customerName = user?.name || 'Ram'
       const id = `ORD-${1000 + orders.length + 5}`
       const order: Order = {
@@ -196,7 +201,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         status: 'placed',
         statusLabel: 'Order Placed',
         items,
-        total: cartTotal,
+        total: orderTotal,
         pickupDate: `${formatScheduleDay(schedule.pickupDate) || 'Next available'} · ${schedule.pickupSlot || '10:00 AM - 12:00 PM'}`,
         deliveryDate: `${formatScheduleDay(schedule.deliveryDate) || 'After pickup'} · ${schedule.deliverySlot || '4:00 PM - 6:00 PM'}`,
         address: user
@@ -206,13 +211,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         customerName,
         customerPhone: user?.phone || '+91 9942172918',
         customerEmail: user?.email || 'ram@email.com',
+        express: schedule.express,
+        expressFee: expressFee || undefined,
       }
       setOrders((prev) => [order, ...prev])
       setNotifications((prev) => [
         {
           id: `n-${Date.now()}`,
-          title: 'New order received',
-          message: `${id} · ${serviceName} from ${customerName} (₹${cartTotal || 0})`,
+          title: schedule.express
+            ? 'New EXPRESS order received'
+            : 'New order received',
+          message: `${id} · ${serviceName} from ${customerName} (₹${orderTotal || 0})${schedule.express ? ' · Express' : ''}`,
           orderId: id,
           createdAt: new Date().toISOString(),
           read: false,
@@ -220,6 +229,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ...prev,
       ])
       setCart([])
+      setScheduleState(defaultSchedule)
       return id
     },
     [cart, cartTotal, orders.length, schedule, user, locationLabel],

@@ -49,7 +49,12 @@ export interface Order {
   customerName: string
   customerPhone: string
   customerEmail: string
+  express?: boolean
+  expressFee?: number
 }
+
+/** Extra charge for same-day / priority return */
+export const EXPRESS_DELIVERY_FEE = 99
 
 export interface AdminNotification {
   id: string
@@ -160,6 +165,7 @@ export const INITIAL_ORDERS: Order[] = [
     customerName: 'Ram',
     customerPhone: '+91 9942172918',
     customerEmail: 'ram@email.com',
+    express: false,
   },
   {
     id: 'ORD-1038',
@@ -171,14 +177,16 @@ export const INITIAL_ORDERS: Order[] = [
       { name: 'Shirt Press', qty: 5, price: 39 },
       { name: 'Pant Press', qty: 3, price: 45 },
     ],
-    total: 330,
+    total: 429,
     pickupDate: '24 Jul 2026, 2:00 PM',
-    deliveryDate: '27 Jul 2026, 5:00 PM',
+    deliveryDate: '24 Jul 2026, 8:00 PM',
     address: '12B, Magarpatta City, Pune',
     createdAt: '2026-07-24',
     customerName: 'Ram',
     customerPhone: '+91 9942172918',
     customerEmail: 'ram@email.com',
+    express: true,
+    expressFee: 99,
   },
   {
     id: 'ORD-1021',

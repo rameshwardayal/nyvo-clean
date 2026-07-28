@@ -433,6 +433,9 @@ export function AdminOrders() {
               <div>
                 <strong>{o.id}</strong>
                 <span className="badge badge-blue">{o.statusLabel}</span>
+                {o.express && (
+                  <span className="badge badge-amber">Express</span>
+                )}
               </div>
               <strong style={{ color: 'var(--primary)' }}>₹{o.total}</strong>
             </div>
@@ -488,7 +491,12 @@ export function AdminOrderDetail() {
       <div className="admin-panel">
         <div className="section-head">
           <h3>{order.id}</h3>
-          <span className="badge badge-blue">{order.statusLabel}</span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {order.express && (
+              <span className="badge badge-amber">Express</span>
+            )}
+            <span className="badge badge-blue">{order.statusLabel}</span>
+          </div>
         </div>
 
         <h4 style={{ marginBottom: 8 }}>Customer</h4>
