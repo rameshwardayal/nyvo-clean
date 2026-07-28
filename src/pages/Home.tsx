@@ -1,14 +1,57 @@
-import { Bell, Gift, ChevronRight, CalendarDays, Menu, User } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import {
+  Bell,
+  Gift,
+  ChevronRight,
+  CalendarDays,
+  Menu,
+  User,
+  X,
+  Home as HomeIcon,
+  Shirt,
+  ClipboardList,
+  ShoppingCart,
+  MapPin,
+  Share2,
+  Shield,
+  LogOut,
+} from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { BrandMark, ServiceGlyph } from '../components/Icons'
 import { useApp } from '../context/AppContext'
 import { SERVICES } from '../data/dummy'
 
+const MENU_LINKS = [
+  { to: '/home', label: 'Home', icon: HomeIcon },
+  { to: '/services', label: 'Services', icon: Shirt },
+  { to: '/orders', label: 'My Orders', icon: ClipboardList },
+  { to: '/cart', label: 'Cart', icon: ShoppingCart },
+  { to: '/schedule', label: 'Schedule pickup', icon: CalendarDays },
+  { to: '/select-location', label: 'Change location', icon: MapPin },
+  { to: '/refer', label: 'Refer & Earn', icon: Share2 },
+  { to: '/account', label: 'Account', icon: User },
+  { to: '/admin/login', label: 'Admin portal', icon: Shield },
+]
+
 export function Home() {
   const navigate = useNavigate()
-  const { user, locationLabel, orders } = useApp()
+  const { user, locationLabel, orders, cartCount } = useApp()
+  const [menuOpen, setMenuOpen] = useState(false)
   const ongoing = orders.filter((o) => o.status !== 'delivered')
   const previewServices = SERVICES.slice(0, 4)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+    }
+  }, [menuOpen])
 
   return (
     <div className="page" style={{ paddingTop: 16 }}>
@@ -48,7 +91,13 @@ export function Home() {
           >
             <User size={18} />
           </button>
-          <button type="button" className="btn-circle" aria-label="Menu">
+          <button
+            type="button"
+            className="btn-circle"
+            aria-label="Open menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(true)}
+          >
             <Menu size={18} />
           </button>
         </div>
@@ -222,6 +271,73 @@ export function Home() {
             <ChevronRight size={18} color="var(--text-light)" />
           </button>
         ))
+      )}
+
+      {menuOpen && (
+        <div className="side-menu" role="dialog" aria-modal="true" aria-label="Main menu">
+          <button
+            type="button"
+            className="side-menu-backdrop"
+            aria-label="Close menu"
+            onClick={() => setMenuOpen(false)}
+          />
+          <aside className="side-menu-panel">
+            <div className="side-menu-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <BrandMark size={36} />
+                <div>
+                  <strong style={{ display: 'block' }}>
+                    {user?.name || 'Guest'}
+                  </strong>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    {locationLabel}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-circle"
+                aria-label="Close menu"
+                onClick={() => setMenuOpen(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <nav className="side-menu-nav">
+              {MENU_LINKS.map(({ to, label, icon: Icon }) => (
+                <button
+                  key={to}
+                  type="button"
+                  className="side-menu-link"
+                  onClick={() => {
+                    setMenuOpen(false)
+                    navigate(to)
+                  }}
+                >
+                  <Icon size={18} />
+                  <span style={{ flex: 1, textAlign: 'left' }}>{label}</span>
+                  {to === '/cart' && cartCount > 0 && (
+                    <span className="badge badge-blue">{cartCount}</span>
+                  )}
+                  <ChevronRight size={16} color="var(--text-light)" />
+                </button>
+              ))}
+            </nav>
+
+            <button
+              type="button"
+              className="side-menu-link side-menu-logout"
+              onClick={() => {
+                setMenuOpen(false)
+                navigate('/signin')
+              }}
+            >
+              <LogOut size={18} />
+              Sign out
+            </button>
+          </aside>
+        </div>
       )}
     </div>
   )

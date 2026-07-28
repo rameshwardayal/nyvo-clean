@@ -1311,3 +1311,91 @@ img {
   margin-top: 14px;
   width: 100%;
 }
+
+.side-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.side-menu-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  border: none;
+  cursor: pointer;
+}
+
+.side-menu-panel {
+  position: relative;
+  z-index: 1;
+  width: min(320px, 88vw);
+  height: 100%;
+  background: #fff;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 16px;
+  animation: slideInRight 0.22s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.side-menu-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.side-menu-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.side-menu-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 12px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: left;
+}
+
+.side-menu-link:hover,
+.side-menu-link:active {
+  background: var(--primary-pale);
+  color: var(--primary);
+}
+
+.side-menu-logout {
+  margin-top: 12px;
+  color: var(--danger);
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  padding-top: 18px;
+}
+
+/* Keep drawer inside the phone frame on desktop */
+.app-frame .side-menu {
+  position: absolute;
+}
